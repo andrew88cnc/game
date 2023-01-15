@@ -3,7 +3,7 @@ package com.game.controller;
 import com.game.entity.Player;
 import com.game.entity.Profession;
 import com.game.entity.Race;
-import com.game.service.InvalidPlayerCustomException;
+import com.game.service.InvalidParamsCustomException;
 import com.game.service.PlayerNotFoundCustomException;
 import com.game.service.PlayerService;
 import com.game.specification.PlayerSpecification;
@@ -50,7 +50,7 @@ public class PlayerController {
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(order.getFieldName()));
 
-        return playerService.getPlayersList(
+        return playerService.getPlayerList(
                 setSpecification(name, title, race, profession, after, before, banned,
                         minExperience, maxExperience, minLevel, maxLevel), pageable).getContent();
     }
@@ -70,7 +70,7 @@ public class PlayerController {
             @RequestParam(value = "minLevel", required = false) Integer minLevel,
             @RequestParam(value = "maxLevel", required = false) Integer maxLevel) {
 
-        return playerService.getPlayersList(
+        return playerService.getPlayerList(
                 setSpecification(name, title, race, profession, after, before, banned,
                         minExperience, maxExperience, minLevel, maxLevel)).size();
     }
@@ -82,16 +82,17 @@ public class PlayerController {
         try {
             Player newPlayer = playerService.createPlayer(player);
             return new ResponseEntity<>(newPlayer, HttpStatus.OK);
-        } catch (InvalidPlayerCustomException e) {
+        } catch (InvalidParamsCustomException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
     @GetMapping("/players/{id}")
     public ResponseEntity<Player> getPlayer(@PathVariable(name = "id") Long id) {
-        if (id <= 0) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        if (id <= 0)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         try {
-            Player player = playerService.getPlayer(id);
+            Player player = playerService.getPlayerById(id);
             return new ResponseEntity<>(player, HttpStatus.OK);
         } catch (PlayerNotFoundCustomException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -100,25 +101,28 @@ public class PlayerController {
 
     @DeleteMapping("/players/{id}")
     public ResponseEntity<?> deletePlayer(@PathVariable("id") Long id) {
-        if (id <= 0) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        if (playerService.deletePlayer(id)) {
+        if (id <= 0)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        if (playerService.deletePlayerById(id)) {
             return new ResponseEntity<>(HttpStatus.OK);
-        } else return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @PostMapping("/players/{id}")
     public ResponseEntity<Player> updatePlayer(@PathVariable("id") Long id, @RequestBody Player player) {
-        if (id <= 0) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        if (player.getName() != null && !playerService.checkName(player.getName()))
+        if (id <= 0)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        if (player.getName() != null && !playerService.checkPlayerName(player.getName()))
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         if (player.getTitle() != null && !playerService.checkTitle(player.getTitle()))
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         if (player.getExperience() != null && !playerService.checkExperience(player.getExperience()))
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        if (player.getBirthday() != null && !playerService.checkBirthday(player.getBirthday()))
+        if (player.getBirthday() != null && !playerService.checkDoB(player.getBirthday()))
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         try {
-            Player newPlayer = playerService.updatePlayer(id, player);
+            Player newPlayer = playerService.updatePlayerById(id, player);
             return new ResponseEntity<>(newPlayer, HttpStatus.OK);
         } catch (PlayerNotFoundCustomException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -126,44 +130,38 @@ public class PlayerController {
 
     }
 
-    private Specification<Player> setSpecification(String name,
-                                                   String title,
-                                                   Race race,
-                                                   Profession profession,
-                                                   Long after,
-                                                   Long before,
+    private Specification<Player> setSpecification(String name, String title, Race race,Profession profession,
+                                                   Long after, Long before,
                                                    Boolean banned,
-                                                   Integer minExperience,
-                                                   Integer maxExperience,
-                                                   Integer minLevel,
-                                                   Integer maxLevel
+                                                   Integer minExperience, Integer maxExperience,
+                                                   Integer minLevel, Integer maxLevel
     ) {
 
-        PlayerSpecification generalSpecification = new PlayerSpecification();
+        PlayerSpecification playerSpecification = new PlayerSpecification();
         if (name != null)
-            generalSpecification.add(new SearchCriteria("name", name, SearchOperation.MATCH));
+            playerSpecification.add(new SearchCriteria("name", name, SearchOperation.MATCH));
         if (title != null)
-            generalSpecification.add(new SearchCriteria("title", title, SearchOperation.MATCH));
+            playerSpecification.add(new SearchCriteria("title", title, SearchOperation.MATCH));
         if (race != null)
-            generalSpecification.add(new SearchCriteria("race", race, SearchOperation.EQUAL));
+            playerSpecification.add(new SearchCriteria("race", race, SearchOperation.EQUAL));
         if (profession != null)
-            generalSpecification.add(new SearchCriteria("profession", profession, SearchOperation.EQUAL));
+            playerSpecification.add(new SearchCriteria("profession", profession, SearchOperation.EQUAL));
         if (after != null)
-            generalSpecification.add(new SearchCriteria("birthday", after, SearchOperation.GREATER_THAN_EQUAL_DATE));
+            playerSpecification.add(new SearchCriteria("birthday", after, SearchOperation.GREATER_THAN_EQUAL_DATE));
         if (before != null)
-            generalSpecification.add(new SearchCriteria("birthday", before, SearchOperation.LESS_THAN_EQUAL_DATE));
+            playerSpecification.add(new SearchCriteria("birthday", before, SearchOperation.LESS_THAN_EQUAL_DATE));
         if (banned != null)
-            generalSpecification.add(new SearchCriteria("banned", banned, SearchOperation.EQUAL));
+            playerSpecification.add(new SearchCriteria("banned", banned, SearchOperation.EQUAL));
         if (minExperience != null)
-            generalSpecification.add(new SearchCriteria("experience", minExperience, SearchOperation.GREATER_THAN_EQUAL));
+            playerSpecification.add(new SearchCriteria("experience", minExperience, SearchOperation.GREATER_THAN_EQUAL));
         if (maxExperience != null)
-            generalSpecification.add(new SearchCriteria("experience", maxExperience, SearchOperation.LESS_THAN_EQUAL));
+            playerSpecification.add(new SearchCriteria("experience", maxExperience, SearchOperation.LESS_THAN_EQUAL));
         if (minLevel != null)
-            generalSpecification.add(new SearchCriteria("level", minLevel, SearchOperation.GREATER_THAN_EQUAL));
+            playerSpecification.add(new SearchCriteria("level", minLevel, SearchOperation.GREATER_THAN_EQUAL));
         if (maxLevel != null)
-            generalSpecification.add(new SearchCriteria("level", maxLevel, SearchOperation.LESS_THAN_EQUAL));
+            playerSpecification.add(new SearchCriteria("level", maxLevel, SearchOperation.LESS_THAN_EQUAL));
 
-        return generalSpecification;
+        return playerSpecification;
 
     }
 }

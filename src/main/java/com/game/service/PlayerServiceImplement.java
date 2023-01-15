@@ -1,7 +1,7 @@
 package com.game.service;
 
 import com.game.entity.Player;
-import com.game.repository.PlayerRepository;
+import com.game.repository.PlayersRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,63 +13,63 @@ import java.util.Date;
 import java.util.List;
 
 @Service
-public class PlayerServiceImpl implements PlayerService{
+public class PlayerServiceImplement implements PlayerService{
 
-    private PlayerRepository playerRepository;
+    private PlayersRepo playersRepo;
 
     @Autowired
-    public void setPlayerRepository(PlayerRepository playerRepository) {
-        this.playerRepository = playerRepository;
+    public void setPlayerRepository(PlayersRepo playersRepo) {
+        this.playersRepo = playersRepo;
     }
 
     @Override
-    public List<Player> getPlayersList(Specification<Player> specification) {
-        return playerRepository.findAll(specification);
+    public List<Player> getPlayerList(Specification<Player> specification) {
+        return playersRepo.findAll(specification);
     }
 
     @Override
-    public Page<Player> getPlayersList(Specification<Player> specification, Pageable pageable) {
-        return playerRepository.findAll(specification, pageable);
+    public Page<Player> getPlayerList(Specification<Player> specification, Pageable pageable) {
+        return playersRepo.findAll(specification, pageable);
     }
 
     @Override
-    public Player createPlayer(Player player) throws InvalidPlayerCustomException {
-        if (!checkPlayerParametersCreate(player)) throw new InvalidPlayerCustomException();
+    public Player createPlayer(Player player) throws InvalidParamsCustomException {
+        if (!checkPlayerParametersCreate(player)) throw new InvalidParamsCustomException();
         if (player.getBanned() == null) player.setBanned(false);
         setLevelAndExperienceUntilNextLevel(player);
-        return playerRepository.saveAndFlush(player);
+        return playersRepo.saveAndFlush(player);
     }
 
     @Override
-    public Player updatePlayer(Long id, Player player) throws PlayerNotFoundCustomException {
+    public Player updatePlayerById(Long id, Player player) throws PlayerNotFoundCustomException {
         Player existPlayer;
         try {
-            existPlayer = getPlayer(id);
+            existPlayer = getPlayerById(id);
         } catch (PlayerNotFoundCustomException e) {
             throw e;
         }
-        if (player.getName() != null && checkName(player.getName())) existPlayer.setName(player.getName());
+        if (player.getName() != null && checkPlayerName(player.getName())) existPlayer.setName(player.getName());
         if (player.getTitle() != null && checkTitle(player.getTitle())) existPlayer.setTitle(player.getTitle());
         if (player.getRace() != null) existPlayer.setRace(player.getRace());
         if (player.getProfession() != null) existPlayer.setProfession(player.getProfession());
         if (player.getExperience() != null && checkExperience(player.getExperience())) existPlayer.setExperience(player.getExperience());
-        if (player.getBirthday() != null && checkBirthday(player.getBirthday())) existPlayer.setBirthday(player.getBirthday());
+        if (player.getBirthday() != null && checkDoB(player.getBirthday())) existPlayer.setBirthday(player.getBirthday());
         if (player.getBanned() != null) existPlayer.setBanned(player.getBanned());
         setLevelAndExperienceUntilNextLevel(existPlayer);
-        return playerRepository.save(existPlayer);
+        return playersRepo.save(existPlayer);
     }
 
     @Override
-    public Player getPlayer(Long id) throws PlayerNotFoundCustomException {
-        if (playerRepository.findById(id).isPresent()) {
-            return playerRepository.findById(id).get();
+    public Player getPlayerById(Long id) throws PlayerNotFoundCustomException {
+        if (playersRepo.findById(id).isPresent()) {
+            return playersRepo.findById(id).get();
         } else throw new PlayerNotFoundCustomException();
     }
 
     @Override
-    public boolean deletePlayer(Long id) {
-        if (playerRepository.findById(id).isPresent()) {
-            playerRepository.deleteById(id);
+    public boolean deletePlayerById(Long id) {
+        if (playersRepo.findById(id).isPresent()) {
+            playersRepo.deleteById(id);
             return true;
         }
         return false;
@@ -92,7 +92,7 @@ public class PlayerServiceImpl implements PlayerService{
     }
 
     @Override
-    public boolean checkName(String name) {
+    public boolean checkPlayerName(String name) {
         return name != null && name.length() >= 1 && name.length() <= 12;
     }
 
@@ -107,7 +107,7 @@ public class PlayerServiceImpl implements PlayerService{
     }
 
     @Override
-    public boolean checkBirthday(Date birthday) {
+    public boolean checkDoB(Date birthday) {
         if (birthday == null) return false;
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(birthday);
@@ -115,9 +115,9 @@ public class PlayerServiceImpl implements PlayerService{
     }
 
     public boolean checkPlayerParametersCreate(Player player) {
-        return checkName(player.getName())
+        return checkPlayerName(player.getName())
                 && checkTitle(player.getTitle())
                 && checkExperience(player.getExperience())
-                && checkBirthday(player.getBirthday());
+                && checkDoB(player.getBirthday());
     }
 }
