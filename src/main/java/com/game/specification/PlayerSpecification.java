@@ -8,6 +8,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class PlayerSpecification implements Specification<Player> {
@@ -37,9 +38,15 @@ public class PlayerSpecification implements Specification<Player> {
             } else if (criteria.getOperation().equals(SearchOperation.GREATER_THAN_EQUAL)) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(
                         root.get(criteria.getKey()), criteria.getValue().toString()));
+            } else if (criteria.getOperation().equals(SearchOperation.GREATER_THAN_EQUAL_DATE)) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        root.get(criteria.getKey()), new Date((Long) criteria.getValue())));
             } else if (criteria.getOperation().equals(SearchOperation.LESS_THAN_EQUAL)) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(
                         root.get(criteria.getKey()), criteria.getValue().toString()));
+            } else if (criteria.getOperation().equals(SearchOperation.LESS_THAN_EQUAL_DATE)) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                        root.get(criteria.getKey()), new Date((Long) criteria.getValue())));
             } else if (criteria.getOperation().equals(SearchOperation.NOT_EQUAL)) {
                 predicates.add(criteriaBuilder.notEqual(
                         root.get(criteria.getKey()), criteria.getValue()));
@@ -68,3 +75,5 @@ public class PlayerSpecification implements Specification<Player> {
         return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
     }
 }
+
+

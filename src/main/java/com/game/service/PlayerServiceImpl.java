@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 @Service
-public class PlayerServiceImple implements PlayerService{
+public class PlayerServiceImpl implements PlayerService{
 
     private PlayerRepository playerRepository;
 
@@ -33,17 +33,21 @@ public class PlayerServiceImple implements PlayerService{
     }
 
     @Override
-    public Player createPlayer(Player player) {
-        if (!checkPlayerParametersCreate(player)) return null;
+    public Player createPlayer(Player player) throws InvalidPlayerCustomException {
+        if (!checkPlayerParametersCreate(player)) throw new InvalidPlayerCustomException();
         if (player.getBanned() == null) player.setBanned(false);
         setLevelAndExperienceUntilNextLevel(player);
         return playerRepository.saveAndFlush(player);
     }
 
     @Override
-    public Player updatePlayer(Long id, Player player) {
-        if (!playerRepository.findById(id).isPresent()) return null;
-        Player existPlayer = getPlayer(id);
+    public Player updatePlayer(Long id, Player player) throws PlayerNotFoundCustomException {
+        Player existPlayer;
+        try {
+            existPlayer = getPlayer(id);
+        } catch (PlayerNotFoundCustomException e) {
+            throw e;
+        }
         if (player.getName() != null && checkName(player.getName())) existPlayer.setName(player.getName());
         if (player.getTitle() != null && checkTitle(player.getTitle())) existPlayer.setTitle(player.getTitle());
         if (player.getRace() != null) existPlayer.setRace(player.getRace());
@@ -56,11 +60,10 @@ public class PlayerServiceImple implements PlayerService{
     }
 
     @Override
-    public Player getPlayer(Long id) {
+    public Player getPlayer(Long id) throws PlayerNotFoundCustomException {
         if (playerRepository.findById(id).isPresent()) {
             return playerRepository.findById(id).get();
-        }
-        return null;
+        } else throw new PlayerNotFoundCustomException();
     }
 
     @Override
@@ -117,6 +120,4 @@ public class PlayerServiceImple implements PlayerService{
                 && checkExperience(player.getExperience())
                 && checkBirthday(player.getBirthday());
     }
-
-
 }

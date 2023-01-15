@@ -3,6 +3,8 @@ package com.game.controller;
 import com.game.entity.Player;
 import com.game.entity.Profession;
 import com.game.entity.Race;
+import com.game.service.InvalidPlayerCustomException;
+import com.game.service.PlayerNotFoundCustomException;
 import com.game.service.PlayerService;
 import com.game.specification.PlayerSpecification;
 import com.game.specification.SearchCriteria;
@@ -16,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -54,7 +55,6 @@ public class PlayerController {
                         minExperience, maxExperience, minLevel, maxLevel), pageable).getContent();
     }
 
-
     @GetMapping("/players/count")
     @ResponseStatus(HttpStatus.OK)
     public Integer getPlayersCount(
@@ -76,25 +76,27 @@ public class PlayerController {
     }
 
 
+
     @PostMapping("/players")
     public ResponseEntity<?> createPlayer(@RequestBody Player player) {
-        Player newPlayer = playerService.createPlayer(player);
-        if (newPlayer == null) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } else {
+        try {
+            Player newPlayer = playerService.createPlayer(player);
             return new ResponseEntity<>(newPlayer, HttpStatus.OK);
+        } catch (InvalidPlayerCustomException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
     @GetMapping("/players/{id}")
     public ResponseEntity<Player> getPlayer(@PathVariable(name = "id") Long id) {
         if (id <= 0) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        Player player = playerService.getPlayer(id);
-        if (player == null) {
+        try {
+            Player player = playerService.getPlayer(id);
+            return new ResponseEntity<>(player, HttpStatus.OK);
+        } catch (PlayerNotFoundCustomException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } else return new ResponseEntity<>(player, HttpStatus.OK);
+        }
     }
-
 
     @DeleteMapping("/players/{id}")
     public ResponseEntity<?> deletePlayer(@PathVariable("id") Long id) {
@@ -115,11 +117,13 @@ public class PlayerController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         if (player.getBirthday() != null && !playerService.checkBirthday(player.getBirthday()))
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
-        Player newPlayer = playerService.updatePlayer(id, player);
-        if (newPlayer == null) {
+        try {
+            Player newPlayer = playerService.updatePlayer(id, player);
+            return new ResponseEntity<>(newPlayer, HttpStatus.OK);
+        } catch (PlayerNotFoundCustomException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } else return new ResponseEntity<>(newPlayer, HttpStatus.OK);
+        }
+
     }
 
     private Specification<Player> setSpecification(String name,
@@ -145,9 +149,9 @@ public class PlayerController {
         if (profession != null)
             generalSpecification.add(new SearchCriteria("profession", profession, SearchOperation.EQUAL));
         if (after != null)
-            generalSpecification.add(new SearchCriteria("birthday", new Date(after), SearchOperation.GREATER_THAN_EQUAL));
+            generalSpecification.add(new SearchCriteria("birthday", after, SearchOperation.GREATER_THAN_EQUAL_DATE));
         if (before != null)
-            generalSpecification.add(new SearchCriteria("birthday", new Date(before), SearchOperation.LESS_THAN_EQUAL));
+            generalSpecification.add(new SearchCriteria("birthday", before, SearchOperation.LESS_THAN_EQUAL_DATE));
         if (banned != null)
             generalSpecification.add(new SearchCriteria("banned", banned, SearchOperation.EQUAL));
         if (minExperience != null)
@@ -162,6 +166,4 @@ public class PlayerController {
         return generalSpecification;
 
     }
-
-
 }

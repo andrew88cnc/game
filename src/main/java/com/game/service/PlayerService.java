@@ -15,11 +15,11 @@ public interface PlayerService {
 
     Page<Player> getPlayersList(Specification<Player> specification, Pageable pageable);
 
-    Player createPlayer(Player player);
+    Player createPlayer(Player player) throws InvalidPlayerCustomException;
 
-    Player getPlayer(Long id);
+    Player getPlayer(Long id) throws PlayerNotFoundCustomException;
 
-    Player updatePlayer(Long id, Player player);
+    Player updatePlayer(Long id, Player player) throws PlayerNotFoundCustomException;
 
     boolean deletePlayer(Long id);
 
@@ -30,5 +30,4 @@ public interface PlayerService {
     boolean checkExperience(Integer experience);
 
     boolean checkBirthday(Date birthday);
-
 }

@@ -28,8 +28,8 @@ public class Player {
     private Profession profession;
 
     @Column(name = "birthday")
+    @Temporal(TemporalType.DATE)
     private Date birthday;
-
     @Column(name = "banned")
     private Boolean banned;
 
@@ -163,5 +163,4 @@ public class Player {
                 ", untilNextLevel=" + untilNextLevel +
                 '}';
     }
-
 }
