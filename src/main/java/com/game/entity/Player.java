@@ -4,6 +4,7 @@ import javax.persistence.*;
 import java.util.Date;
 import java.util.Objects;
 
+
 @Entity
 @Table(name = "player")
 public class Player {
@@ -123,6 +124,7 @@ public class Player {
     public void setUntilNextLevel(Integer untilNextLevel) {
         this.untilNextLevel = untilNextLevel;
     }
+
 
     @Override
     public boolean equals(Object o) {
